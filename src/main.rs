@@ -1,16 +1,26 @@
-use chrono::{Datelike, Timelike, Utc};
+use chrono::{DateTime, Datelike, Timelike, Utc};
 use chrono_tz::Asia::Taipei;
+use chrono_tz::Tz;
 use csv::{Reader, Writer};
 use serde_json::Value;
 use std::fs::File;
 
-const SIX_HOURS_IN_SECONDS: u32 = 6 * 3600;
+const SIX_HOURS_IN_SECONDS: u32 = 6 * 60 * 60;
 const TEN_MINUTES_IN_SECONDS: u32 = 10 * 60;
 const NUM_DATA_PER_DAY: u32 = 97;
 
 #[tokio::main]
 async fn main() {
-    let res = Fetcher::fetch().await;
+    let t = Utc::now().with_timezone(&Taipei);
+    let sec = t.num_seconds_from_midnight();
+    let too_early = sec < SIX_HOURS_IN_SECONDS;
+    let too_late = sec >= SIX_HOURS_IN_SECONDS + (NUM_DATA_PER_DAY + 1) * TEN_MINUTES_IN_SECONDS;
+    if too_early || too_late {
+        println!("Invalid time: {}", t);
+        return;
+    }
+
+    let res = Fetcher::fetch(t).await;
     let i = NUM_DATA_PER_DAY * (res.weekday - 1)
         + (res.time - SIX_HOURS_IN_SECONDS) / TEN_MINUTES_IN_SECONDS;
 
@@ -57,7 +67,9 @@ impl Data {
 
     pub fn write(&self, file_path: &str) {
         let mut writer = Writer::from_path(file_path).unwrap();
-        writer.write_record(&["weekday", "time", "count", "sum", "average"]).unwrap();
+        writer
+            .write_record(&["weekday", "time", "count", "sum", "average"])
+            .unwrap();
         for r in self.records.iter() {
             let average = if let 0 = r.count { 0 } else { r.sum / r.count };
             writer
@@ -76,7 +88,7 @@ impl Data {
 struct Fetcher {}
 
 impl Fetcher {
-    pub async fn fetch() -> Record {
+    pub async fn fetch(t: DateTime<Tz>) -> Record {
         let url = "https://dasc.cyc.org.tw/api";
         let res = reqwest::Client::new()
             .post(url)
@@ -86,8 +98,6 @@ impl Fetcher {
             .text()
             .await
             .unwrap();
-
-        let t = Utc::now().with_timezone(&Taipei);
 
         let data: Value = serde_json::from_str(&res).unwrap();
         let s = &data["swim"][0].to_string();
