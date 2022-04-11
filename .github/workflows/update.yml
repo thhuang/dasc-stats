@@ -31,9 +31,8 @@ jobs:
 
       - name: Commit and push if changed
         run: |-
-          git add .
-          git diff
+          git add --all
           git config --global user.email "dascstats.bot@thhuang.dev"
           git config --global user.name "bot"
-          git commit -m "update stats"
+          git diff-index --quiet HEAD || git commit -m 'update stats'
           git push
