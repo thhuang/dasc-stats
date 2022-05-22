@@ -1,38 +1,38 @@
-name: Update Stats
+# name: Update Stats
 
-on:
-  schedule:
-    - cron: '*/10 * * * *'
+# on:
+#   schedule:
+#     - cron: '*/10 * * * *'
 
-env:
-  CARGO_TERM_COLOR: always
+# env:
+#   CARGO_TERM_COLOR: always
 
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+# jobs:
+#   update:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
 
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+#       - name: Cache
+#         uses: actions/cache@v3
+#         with:
+#           path: |
+#             ~/.cargo/bin/
+#             ~/.cargo/registry/index/
+#             ~/.cargo/registry/cache/
+#             ~/.cargo/git/db/
+#             target/
+#           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run
-        run: |-
-          cargo run
+#       - name: Run
+#         run: |-
+#           cargo run
 
-      - name: Commit and push if changed
-        run: |-
-          git add --all
-          git config --global user.email "dascstats.bot@thhuang.dev"
-          git config --global user.name "bot"
-          git diff-index --quiet HEAD || git commit -m 'update stats'
-          git push
+#       - name: Commit and push if changed
+#         run: |-
+#           git add --all
+#           git config --global user.email "dascstats.bot@thhuang.dev"
+#           git config --global user.name "bot"
+#           git diff-index --quiet HEAD || git commit -m 'update stats'
+#           git push
